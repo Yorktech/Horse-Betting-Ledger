@@ -1,0 +1,5 @@
+{
+  "name": "Betting Ledger",
+  "description": "A web application to track horse racing bets, calculate profits and losses, and manage a bankroll, replacing a traditional spreadsheet.",
+  "requestFramePermissions": []
+}
