@@ -5,6 +5,7 @@ interface HeaderProps {
   onAddBet: () => void;
   onSave: () => void;
   isSaving: boolean;
+  isSaveDisabled?: boolean;
 }
 
 const SpinnerIcon = () => (
@@ -14,7 +15,7 @@ const SpinnerIcon = () => (
     </svg>
 );
 
-export const Header: React.FC<HeaderProps> = ({ onAddBet, onSave, isSaving }) => {
+export const Header: React.FC<HeaderProps> = ({ onAddBet, onSave, isSaving, isSaveDisabled }) => {
   return (
     <header className="bg-brand-dark/80 backdrop-blur-sm sticky top-0 z-10 p-4 border-b border-gray-700">
       <div className="container mx-auto flex justify-between items-center">
@@ -25,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({ onAddBet, onSave, isSaving }) =>
           <Button onClick={onAddBet} variant="secondary" disabled={isSaving}>
             + Add Bet
           </Button>
-          <Button onClick={onSave} disabled={isSaving}>
+          <Button onClick={onSave} disabled={isSaving || isSaveDisabled}>
             {isSaving ? (
                 <>
                     <SpinnerIcon />

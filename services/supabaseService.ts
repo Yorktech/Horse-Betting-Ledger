@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 import type { Bet, BetData } from '../types';
 
 const TABLE_NAME = 'bets';
@@ -30,6 +30,10 @@ const toDb = (bet: Bet) => ({
  * @returns A promise that resolves to the grid data.
  */
 export const fetchData = async (): Promise<{ data: BetData }> => {
+  if (!isSupabaseConfigured || !supabase) {
+    return { data: [] };
+  }
+  
   console.log('Fetching data from Supabase...');
   const { data, error } = await supabase
     .from(TABLE_NAME)
@@ -52,6 +56,11 @@ export const fetchData = async (): Promise<{ data: BetData }> => {
  * @returns A promise that resolves when the save is complete.
  */
 export const saveData = async (data: BetData): Promise<void> => {
+    if (!isSupabaseConfigured || !supabase) {
+        console.warn('Supabase not configured. Save operation skipped.');
+        return;
+    }
+    
     console.log('Saving data to Supabase...', data);
 
     const dataToSave = data.map(toDb);

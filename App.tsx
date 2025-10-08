@@ -4,6 +4,7 @@ import { BettingTable } from './components/Grid';
 import { StatsPanel } from './components/StatsPanel';
 import { Toast } from './components/Toast';
 import { fetchData, saveData } from './services/supabaseService';
+import { isSupabaseConfigured } from './services/supabaseClient';
 import type { Bet, ToastMessage } from './types';
 import { Outcome } from './types';
 
@@ -16,6 +17,32 @@ const LoadingSkeleton: React.FC = () => (
             ))}
         </div>
     </div>
+);
+
+const SupabaseSetupInstructions: React.FC = () => (
+  <div className="fixed inset-0 bg-brand-dark bg-opacity-95 z-50 flex items-center justify-center p-4 sm:p-8" aria-modal="true" role="dialog">
+    <div className="bg-gray-800 p-6 sm:p-8 rounded-lg shadow-2xl max-w-2xl w-full border border-gray-700 transform transition-all" role="document">
+      <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">Configuration Needed</h2>
+      <p className="text-gray-300 mb-6">
+        To save your data, you need to connect this app to your Supabase project. Please add your Supabase credentials using the secret manager for this environment.
+      </p>
+      <div className="space-y-4">
+        <div className="bg-gray-900 p-4 rounded-md">
+          <label htmlFor="supabase-url-secret" className="block text-sm font-medium text-gray-400 mb-1">Secret Name</label>
+          <code id="supabase-url-secret" className="text-lg text-green-400 bg-gray-700 px-2 py-1 rounded">SUPABASE_URL</code>
+          <p className="text-xs text-gray-500 mt-1">Find this in your Supabase project settings under "API".</p>
+        </div>
+        <div className="bg-gray-900 p-4 rounded-md">
+          <label htmlFor="supabase-key-secret" className="block text-sm font-medium text-gray-400 mb-1">Secret Name</label>
+          <code id="supabase-key-secret" className="text-lg text-green-400 bg-gray-700 px-2 py-1 rounded">SUPABASE_ANON_KEY</code>
+          <p className="text-xs text-gray-500 mt-1">This is the public "anon" key for your project.</p>
+        </div>
+      </div>
+       <p className="text-gray-400 mt-6 text-sm">
+        After adding the secrets, please refresh the page. The app will work locally without saving your data until this is configured.
+      </p>
+    </div>
+  </div>
 );
 
 
@@ -144,6 +171,10 @@ const App: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (!isSupabaseConfigured) {
+      setToast({ id: Date.now(), message: 'Cannot save. Please configure Supabase credentials.', type: 'error' });
+      return;
+    }
     setIsSaving(true);
     try {
       await saveData(bets);
@@ -157,7 +188,13 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-brand-dark text-brand-light font-sans">
-      <Header onAddBet={handleAddBet} onSave={handleSave} isSaving={isSaving} />
+      {!isSupabaseConfigured && <SupabaseSetupInstructions />}
+      <Header 
+        onAddBet={handleAddBet} 
+        onSave={handleSave} 
+        isSaving={isSaving}
+        isSaveDisabled={!isSupabaseConfigured}
+      />
       <main className="container mx-auto p-4">
         <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-grow">
