@@ -124,7 +124,7 @@ const App: React.FC = () => {
 
   const handleAddBet = () => {
     const newBet: Bet = {
-      id: `bet-${Date.now()}`,
+      id: crypto.randomUUID(),
       bookie: '',
       date: new Date().toISOString().split('T')[0],
       horse: '',

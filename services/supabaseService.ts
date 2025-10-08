@@ -1,44 +1,91 @@
+import { supabase } from './supabaseClient';
 import type { Bet, BetData } from '../types';
-import { Outcome } from '../types';
 
-// --- MOCK DATA ---
-const createInitialData = (): BetData => {
-  return [
-    { id: 'bet-1', bookie: '365', date: '2024-02-23', odds: 8, stake: 2.00, outcome: Outcome.WON, horse: 'Northcliff', trainer: 'Mike Murphy & Michael Keady', jockey: 'Harry Davies', isEachWay: true, placeFraction: 5 },
-    { id: 'bet-2', bookie: '365', date: '2024-02-23', odds: 26, stake: 2.00, outcome: Outcome.PLACED, horse: 'One Last Hug', trainer: 'Jim Goldie', jockey: 'Jim Goldie', isEachWay: true, placeFraction: 5 },
-    { id: 'bet-3', bookie: '365', date: '2024-02-24', odds: 13, stake: 2.00, outcome: Outcome.LOST, horse: 'Cobh Harour', trainer: 'Mark Loughnane', jockey: 'Mark Loughnane', isEachWay: false, placeFraction: '' },
-    { id: 'bet-4', bookie: '365', date: '2024-02-24', odds: 13, stake: 2.00, outcome: Outcome.PLACED, horse: 'Solly Attwell', trainer: 'Cian Collins', jockey: 'SW Flanagan', isEachWay: true, placeFraction: 4 },
-    { id: 'bet-5', bookie: '365', date: '2024-02-26', odds: 8, stake: 2.00, outcome: Outcome.PLACED, horse: 'Bedford Flyer', trainer: 'Michael Appleby', jockey: 'Hollie Doyle', isEachWay: true, placeFraction: 5 },
-  ];
-};
-
-
-let MOCK_DB: BetData = createInitialData();
+const TABLE_NAME = 'bets';
 
 /**
- * Fetches the spreadsheet data.
+ * Converts DB representation (nulls) to app representation ('').
+ */
+const fromDb = (bet: any): Bet => ({
+  ...bet,
+  odds: bet.odds === null ? '' : bet.odds,
+  stake: bet.stake === null ? '' : bet.stake,
+  placeFraction: bet.placeFraction === null ? '' : bet.placeFraction,
+});
+
+/**
+ * Converts app representation ('') to DB representation (nulls).
+ * This ensures empty string inputs are stored as NULL in the database.
+ */
+const toDb = (bet: Bet) => ({
+  ...bet,
+  odds: bet.odds === '' ? null : bet.odds,
+  stake: bet.stake === '' ? null : bet.stake,
+  placeFraction: bet.placeFraction === '' ? null : bet.placeFraction,
+});
+
+
+/**
+ * Fetches the spreadsheet data from Supabase.
  * @returns A promise that resolves to the grid data.
  */
 export const fetchData = async (): Promise<{ data: BetData }> => {
-  console.log('Fetching data...');
+  console.log('Fetching data from Supabase...');
+  const { data, error } = await supabase
+    .from(TABLE_NAME)
+    .select('*')
+    .order('date', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching data:', error);
+    throw error;
+  }
   
-  // MOCK IMPLEMENTATION
-  await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-  
-  return { data: MOCK_DB };
+  console.log('Data fetched successfully.');
+  return { data: data.map(fromDb) };
 };
 
 /**
- * Saves the entire spreadsheet data.
+ * Saves the entire spreadsheet data by synchronizing it with the database.
+ * Deletes bets not in the current state, and upserts the rest.
  * @param data The current grid data to save.
  * @returns A promise that resolves when the save is complete.
  */
 export const saveData = async (data: BetData): Promise<void> => {
-    console.log('Saving data...', data);
+    console.log('Saving data to Supabase...', data);
 
-    // MOCK IMPLEMENTATION
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
-    MOCK_DB = JSON.parse(JSON.stringify(data)); // Deep copy to simulate saving
+    const dataToSave = data.map(toDb);
+
+    // 1. Get all current bet IDs from the database
+    const { data: dbBets, error: fetchError } = await supabase.from(TABLE_NAME).select('id');
+    if (fetchError) {
+        console.error('Error fetching existing IDs:', fetchError);
+        throw fetchError;
+    }
     
-    console.log('Data saved successfully.');
+    // 2. Identify which bets to delete by comparing DB IDs with current app state IDs
+    const currentIds = new Set(data.map(b => b.id));
+    const dbIds = dbBets.map(b => b.id);
+    const idsToDelete = dbIds.filter(id => !currentIds.has(id));
+
+    // 3. Perform delete and upsert operations
+    if (idsToDelete.length > 0) {
+        console.log('Deleting bets:', idsToDelete);
+        const { error: deleteError } = await supabase.from(TABLE_NAME).delete().in('id', idsToDelete);
+        if (deleteError) {
+            console.error('Error deleting bets:', deleteError);
+            throw deleteError;
+        }
+    }
+
+    if (dataToSave.length > 0) {
+        console.log('Upserting bets:', dataToSave.length);
+        const { error: upsertError } = await supabase.from(TABLE_NAME).upsert(dataToSave);
+        if (upsertError) {
+            console.error('Error upserting bets:', upsertError);
+            throw upsertError;
+        }
+    }
+    
+    console.log('Data saved successfully to Supabase.');
 };
