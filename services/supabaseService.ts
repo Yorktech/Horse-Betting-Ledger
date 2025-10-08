@@ -11,6 +11,7 @@ const fromDb = (bet: any): Bet => ({
   odds: bet.odds === null ? '' : bet.odds,
   stake: bet.stake === null ? '' : bet.stake,
   placeFraction: bet.placeFraction === null ? '' : bet.placeFraction,
+  manualProfitLoss: bet.manualProfitLoss === null ? '' : bet.manualProfitLoss,
 });
 
 /**
@@ -22,6 +23,7 @@ const toDb = (bet: Bet) => ({
   odds: bet.odds === '' ? null : bet.odds,
   stake: bet.stake === '' ? null : bet.stake,
   placeFraction: bet.placeFraction === '' ? null : bet.placeFraction,
+  manualProfitLoss: bet.manualProfitLoss === '' || bet.manualProfitLoss === undefined ? null : bet.manualProfitLoss,
 });
 
 

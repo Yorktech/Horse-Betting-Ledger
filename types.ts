@@ -18,6 +18,7 @@ export interface Bet {
   jockey: string;
   isEachWay: boolean;
   placeFraction: number | '';
+  manualProfitLoss?: number | ''; // Manual override for free bets, odds boosts, etc.
 }
 
 export type BetData = Bet[];

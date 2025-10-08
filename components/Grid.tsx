@@ -33,11 +33,11 @@ export const BettingTable: React.FC<BettingTableProps> = ({ bets, onUpdateBet, o
     
     const handleInputChange = (id: string, field: keyof Omit<Bet, 'id'>, e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const value = e.target.value;
-        const isNumeric = field === 'odds' || field === 'stake' || field === 'placeFraction';
+        const isNumeric = field === 'odds' || field === 'stake' || field === 'placeFraction' || field === 'manualProfitLoss';
         onUpdateBet(id, field, isNumeric && value !== '' ? parseFloat(value) : value);
     };
     
-    const headers = ['Bookie', 'Date', 'Horse', 'Trainer', 'Jockey', 'Odds', 'Stake', 'E/W', 'Place Terms', 'Outcome', 'Profit/Loss', 'Running P/L', 'Actions'];
+    const headers = ['Bookie', 'Date', 'Horse', 'Trainer', 'Jockey', 'Odds', 'Stake', 'E/W', 'Place Terms', 'Outcome', 'Manual P/L', 'Profit/Loss', 'Running P/L', 'Actions'];
 
   return (
     <div className="overflow-x-auto">
@@ -109,6 +109,16 @@ export const BettingTable: React.FC<BettingTableProps> = ({ bets, onUpdateBet, o
                                     <option key={option} value={option} className="bg-gray-700 text-white">{option}</option>
                                 ))}
                              </select>
+                        </td>
+                        <td className="p-0 border-r border-b border-gray-700" title="Override auto-calculation (for free bets, odds boosts, etc.)">
+                            <input
+                                type="number"
+                                value={bet.manualProfitLoss ?? ''}
+                                onChange={(e) => handleInputChange(bet.id, 'manualProfitLoss', e)}
+                                className="w-full h-full p-2 bg-transparent text-yellow-300 focus:bg-gray-700 focus:outline-none font-mono text-right placeholder-gray-600"
+                                placeholder="Auto"
+                                step="0.01"
+                            />
                         </td>
                         <ProfitLossCell value={bet.profitLoss} />
                         <ProfitLossCell value={bet.runningProfitLoss} />

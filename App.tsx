@@ -72,30 +72,52 @@ const App: React.FC = () => {
   const calculatedBets = useMemo(() => {
     let runningTotal = 0;
     return bets.map(bet => {
-        const { odds, stake, outcome, isEachWay, placeFraction } = bet;
+        const { odds, stake, outcome, isEachWay, placeFraction, manualProfitLoss } = bet;
         let profitLoss = 0;
 
-        const stakeNum = typeof stake === 'number' && stake > 0 ? stake : 0;
-        const oddsNum = typeof odds === 'number' && odds > 0 ? odds : 0;
-        const placeFractionNum = typeof placeFraction === 'number' && placeFraction > 0 ? placeFraction : 0;
+        // Use manual override if provided
+        if (typeof manualProfitLoss === 'number') {
+            profitLoss = manualProfitLoss;
+        } else {
+            // Calculate automatically
+            const stakeNum = typeof stake === 'number' && stake > 0 ? stake : 0;
+            const oddsNum = typeof odds === 'number' && odds > 0 ? odds : 0;
+            const placeFractionNum = typeof placeFraction === 'number' && placeFraction > 0 ? placeFraction : 0;
 
-        if (stakeNum > 0 && oddsNum > 0) {
-            if (isEachWay) {
-                // EACH-WAY BET CALCULATION
-                // Stake is unit stake. Total stake is stake * 2.
-                if (placeFractionNum > 0) {
-                    const winProfit = stakeNum * oddsNum;
-                    const placeProfit = stakeNum * (oddsNum / placeFractionNum);
+            if (stakeNum > 0 && oddsNum > 0) {
+                if (isEachWay) {
+                    // EACH-WAY BET CALCULATION
+                    // Stake is unit stake. Total stake is stake * 2.
+                    if (placeFractionNum > 0) {
+                        const winProfit = stakeNum * oddsNum;
+                        const placeProfit = stakeNum * (oddsNum / placeFractionNum);
 
+                        switch (outcome) {
+                            case Outcome.WON:
+                                profitLoss = winProfit + placeProfit;
+                                break;
+                            case Outcome.PLACED:
+                                profitLoss = placeProfit - stakeNum; // Win part of stake is lost
+                                break;
+                            case Outcome.LOST:
+                                profitLoss = -stakeNum * 2; // Both parts lose
+                                break;
+                            case Outcome.VOID:
+                                profitLoss = 0; // Stake is returned
+                                break;
+                            default:
+                                profitLoss = 0;
+                        }
+                    }
+                } else {
+                    // WIN-ONLY BET CALCULATION
                     switch (outcome) {
                         case Outcome.WON:
-                            profitLoss = winProfit + placeProfit;
+                            profitLoss = stakeNum * oddsNum;
                             break;
-                        case Outcome.PLACED:
-                            profitLoss = placeProfit - stakeNum; // Win part of stake is lost
-                            break;
+                        case Outcome.PLACED: // A place on a win-only bet is a loss
                         case Outcome.LOST:
-                            profitLoss = -stakeNum * 2; // Both parts lose
+                            profitLoss = -stakeNum;
                             break;
                         case Outcome.VOID:
                             profitLoss = 0; // Stake is returned
@@ -103,22 +125,6 @@ const App: React.FC = () => {
                         default:
                             profitLoss = 0;
                     }
-                }
-            } else {
-                // WIN-ONLY BET CALCULATION
-                switch (outcome) {
-                    case Outcome.WON:
-                        profitLoss = stakeNum * oddsNum;
-                        break;
-                    case Outcome.PLACED: // A place on a win-only bet is a loss
-                    case Outcome.LOST:
-                        profitLoss = -stakeNum;
-                        break;
-                    case Outcome.VOID:
-                        profitLoss = 0; // Stake is returned
-                        break;
-                    default:
-                        profitLoss = 0;
                 }
             }
         }
