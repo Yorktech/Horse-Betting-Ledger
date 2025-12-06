@@ -1,8 +1,8 @@
 import React from 'react';
-import { ArrowDown, ArrowUp, ArrowUpDown, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Trash2, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Bet } from '../types';
-import { Outcome } from '../types';
+import { Outcome, BetType } from '../types';
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { Input } from './ui/input';
@@ -44,6 +44,7 @@ interface BettingTableProps {
     value: string | number | boolean
   ) => void;
   onDeleteBet: (betId: string) => void;
+  onEditBet: (bet: Bet) => void;
 }
 
 type SortKey =
@@ -110,21 +111,21 @@ const columnDefinitions: Array<{
   align?: 'left' | 'center' | 'right';
   className?: string;
 }> = [
-  { key: 'bookie', label: 'Bookie', sortable: true },
-  { key: 'date', label: 'Date', sortable: true },
-  { key: 'horse', label: 'Horse', sortable: true },
-  { key: 'trainer', label: 'Trainer', sortable: true },
-  { key: 'jockey', label: 'Jockey', sortable: true },
-  { key: 'odds', label: 'Odds', sortable: true, align: 'right' },
-  { key: 'stake', label: 'Stake', sortable: true, align: 'right' },
-  { key: 'isEachWay', label: 'E/W', sortable: true, align: 'center' },
-  { key: 'placeFraction', label: 'Place Terms', sortable: true, align: 'center' },
-  { key: 'outcome', label: 'Outcome', sortable: true },
-  { key: 'manualProfitLoss', label: 'Manual P/L', sortable: true, align: 'right' },
-  { key: 'profitLoss', label: 'Profit/Loss', sortable: true, align: 'right' },
-  { key: 'runningProfitLoss', label: 'Running P/L', sortable: true, align: 'right' },
-  { key: 'actions', label: 'Actions', align: 'center' },
-];
+    { key: 'bookie', label: 'Bookie', sortable: true },
+    { key: 'date', label: 'Date', sortable: true },
+    { key: 'horse', label: 'Horse', sortable: true },
+    { key: 'trainer', label: 'Trainer', sortable: true },
+    { key: 'jockey', label: 'Jockey', sortable: true },
+    { key: 'odds', label: 'Odds', sortable: true, align: 'right' },
+    { key: 'stake', label: 'Stake', sortable: true, align: 'right' },
+    { key: 'isEachWay', label: 'E/W', sortable: true, align: 'center' },
+    { key: 'placeFraction', label: 'Place Terms', sortable: true, align: 'center' },
+    { key: 'outcome', label: 'Outcome', sortable: true },
+    { key: 'manualProfitLoss', label: 'Manual P/L', sortable: true, align: 'right' },
+    { key: 'profitLoss', label: 'Profit/Loss', sortable: true, align: 'right' },
+    { key: 'runningProfitLoss', label: 'Running P/L', sortable: true, align: 'right' },
+    { key: 'actions', label: 'Actions', align: 'center' },
+  ];
 
 const toNumericValue = (value: CalculatedBet[SortKey]): number => {
   if (typeof value === 'number') {
@@ -222,6 +223,7 @@ export const BettingTable: React.FC<BettingTableProps> = ({
   bets,
   onUpdateBet,
   onDeleteBet,
+  onEditBet,
 }) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [sortConfig, setSortConfig] = React.useState<{
@@ -537,15 +539,28 @@ export const BettingTable: React.FC<BettingTableProps> = ({
                   <ProfitLossCell value={bet.profitLoss} />
                   <ProfitLossCell value={bet.runningProfitLoss} />
                   <TableCell className="text-center">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDeleteBet(bet.id)}
-                      aria-label={`Delete bet on ${bet.horse || 'horse'}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-1">
+                      {bet.type === BetType.LUCKY_15 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onEditBet(bet)}
+                          aria-label={`Edit bet on ${bet.horse || 'horse'}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onDeleteBet(bet.id)}
+                        aria-label={`Delete bet on ${bet.horse || 'horse'}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
