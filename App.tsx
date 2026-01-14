@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { BettingTable } from './components/Grid';
 import { StatsPanel } from './components/StatsPanel';
 import { Toast } from './components/Toast';
+import { ImportModal } from './components/ImportModal';
 import { Lucky15Modal } from './components/Lucky15Modal';
 import { fetchData, saveData } from './services/supabaseService';
 import { isSupabaseConfigured } from './services/supabaseClient';
@@ -71,8 +72,9 @@ const App: React.FC = () => {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [toast, setToast] = useState<ToastMessage | null>(null);
 
-  // Lucky 15 Modal State
+  // Modal States
   const [isLucky15ModalOpen, setIsLucky15ModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingBet, setEditingBet] = useState<Bet | undefined>(undefined);
 
   const loadData = useCallback(async () => {
@@ -285,6 +287,15 @@ const App: React.FC = () => {
     setIsLucky15ModalOpen(true);
   };
 
+  const handleImportClick = () => {
+    setIsImportModalOpen(true);
+  };
+
+  const handleImportBets = (importedBets: Bet[]) => {
+    setBets(prev => [...prev, ...importedBets]);
+    setToast({ id: Date.now(), message: `Successfully imported ${importedBets.length} bets!`, type: 'success' });
+  };
+
   const handleSaveLucky15 = (bet: Bet) => {
     if (editingBet) {
       setBets(prev => prev.map(b => b.id === bet.id ? bet : b));
@@ -326,6 +337,7 @@ const App: React.FC = () => {
       <Header
         onAddBet={handleAddSingle}
         onAddLucky15={handleAddLucky15}
+        onImportClick={handleImportClick}
         onSave={handleSave}
         isSaving={isSaving}
         isSaveDisabled={!isSupabaseConfigured}
@@ -354,6 +366,11 @@ const App: React.FC = () => {
         onClose={() => setIsLucky15ModalOpen(false)}
         onSave={handleSaveLucky15}
         initialBet={editingBet}
+      />
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={handleImportBets}
       />
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>

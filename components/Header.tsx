@@ -4,6 +4,7 @@ import { Button } from './Button';
 interface HeaderProps {
   onAddBet: () => void;
   onAddLucky15: () => void;
+  onImportClick: () => void;
   onSave: () => void;
   isSaving: boolean;
   isSaveDisabled?: boolean;
@@ -16,7 +17,7 @@ const SpinnerIcon = () => (
   </svg>
 );
 
-export const Header: React.FC<HeaderProps> = ({ onAddBet, onAddLucky15, onSave, isSaving, isSaveDisabled }) => {
+export const Header: React.FC<HeaderProps> = ({ onAddBet, onAddLucky15, onImportClick, onSave, isSaving, isSaveDisabled }) => {
   return (
     <header className="bg-brand-dark/80 backdrop-blur-sm sticky top-0 z-10 p-4 border-b border-gray-700">
       <div className="container mx-auto flex justify-between items-center">
@@ -24,6 +25,9 @@ export const Header: React.FC<HeaderProps> = ({ onAddBet, onAddLucky15, onSave, 
           Betting Ledger
         </h1>
         <div className="flex items-center space-x-4">
+          <Button onClick={onImportClick} variant="outline" disabled={isSaving}>
+            Import
+          </Button>
           <Button onClick={onAddBet} variant="secondary" disabled={isSaving}>
             + Add Single
           </Button>
